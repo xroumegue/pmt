@@ -35,6 +35,7 @@ import drv_ftdi
 from board_configuration import common
 import gui
 import tui
+import server
 
 LOG_LEVEL = logging.WARNING
 
@@ -131,6 +132,9 @@ def main():
     parser_eeprom.add_argument('-f', '--file', required=False, help='Helper file containing data to write',
                                metavar='file')
 
+    parser_server = subparser.add_parser('server', help='server utility')
+    parser_server.add_argument('-b', '--board', required=False, help='specify supported board name', metavar='board')
+
     args = parser.parse_args()
     logging.debug(args)
 
@@ -193,6 +197,10 @@ def main():
                 board.board_eeprom_read()
             elif args.mode == 'write' or args.mode == 'w':
                 board.board_eeprom_write()
+
+    if args.command == 'server':
+        board = drv_ftdi.Board(args)
+        server.run_server(board, args)
 
 if __name__ == '__main__':
     main()
