@@ -10,8 +10,12 @@ PORT = 65432
 def client_thread(board, conn, addr):
 
     while True:
-        d = conn.recv(1024)
-        if not d:
+        try:
+            d = conn.recv(1024)
+            if not d:
+                break
+        except socket.error as e:
+            print("error while receiving:: " + str(e))
             break
         drv_ftdi.DATA_LOCK.acquire()
         rail_buf = copy.deepcopy(board.data_buf)
@@ -23,7 +27,10 @@ def client_thread(board, conn, addr):
             tmp_p = tmp_v * tmp_c
             tmp = d_rail['railnumber'] + ':' + str(tmp_p)
             data = data + tmp + ";"
-        conn.sendall(bytes(data, encoding='utf8'))
+        try:
+            conn.sendall(bytes(data, encoding='utf8'))
+        except socket.error as e:
+            print("error while sending:: " + str(e))
     print('Closing connection from {:s}:{:d}'.format(addr[0],addr[1]))
     conn.close()
 
@@ -36,10 +43,13 @@ def run_server(board, args):
         s.bind((HOST, PORT))
         s.listen(10)
         while True:
-            conn, addr = s.accept()
-            print('Accepting connection from {:s}:{:d}'.format(addr[0],addr[1]))
             try:
-                threading.Thread(target=client_thread, args=(board, conn, addr)).start()
-            except:
-                import traceback
-                traceback.print_exc()
+                conn, addr = s.accept()
+                print('Accepting connection from {:s}:{:d}'.format(addr[0],addr[1]))
+                try:
+                    threading.Thread(target=client_thread, args=(board, conn, addr)).start()
+                except:
+                    import traceback
+                    traceback.print_exc()
+            except socket.error as e:
+                print("error while accepting connections:: " + str(e))
