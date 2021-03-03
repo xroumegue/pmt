@@ -134,6 +134,8 @@ def main():
 
     parser_server = subparser.add_parser('server', help='server utility')
     parser_server.add_argument('-b', '--board', required=False, help='specify supported board name', metavar='board')
+    parser_server.add_argument('-i', '--id', required=False, type=int, default=0,
+                               help='specify id of the EEPROM returned by lsftdi', metavar='id')
 
     args = parser.parse_args()
     logging.debug(args)
@@ -200,7 +202,7 @@ def main():
 
     if args.command == 'server':
         board = drv_ftdi.Board(args)
-        server.run_server(board, args)
+        server.run_server(board)
 
 if __name__ == '__main__':
     main()
