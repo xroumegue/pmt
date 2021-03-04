@@ -6,11 +6,13 @@ import drv_ftdi
 
 HOST = '0.0.0.0'
 PORT = 65432
+STOP_THREAD = False
 
 
 def client_thread(board, conn, addr):
+    global STOP_THREAD
     last_sec_len_buf = 0
-    while True:
+    while not STOP_THREAD:
         try:
             d = conn.recv(1024)
             if not d:
@@ -41,20 +43,25 @@ def client_thread(board, conn, addr):
 
 
 def run_server(board):
+    global STOP_THREAD
     thread_process = threading.Thread(target=board.get_data)
     thread_process.start()
-
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
         s.bind((HOST, PORT))
         s.listen(10)
         while True:
             try:
-                conn, addr = s.accept()
-                print('Accepting connection from {:s}:{:d}'.format(addr[0],addr[1]))
                 try:
-                    threading.Thread(target=client_thread, args=(board, conn, addr)).start()
-                except:
-                    import traceback
-                    traceback.print_exc()
-            except socket.error as e:
-                print("error while accepting connections:: " + str(e))
+                    conn, addr = s.accept()
+                    print('Accepting connection from {:s}:{:d}'.format(addr[0],addr[1]))
+                    try:
+                        threading.Thread(target=client_thread, args=(board, conn, addr)).start()
+                    except:
+                        import traceback
+                        traceback.print_exc()
+                except socket.error as e:
+                    print("error while accepting connections:: " + str(e))
+            except KeyboardInterrupt:
+                STOP_THREAD = True
+                s.close()
+                break
