@@ -37,7 +37,6 @@ def client_thread(board, conn, addr):
             last_sec_len_buf = curr_len_buf
         except socket.error as e:
             print("error while sending:: " + str(e))
-    drv_ftdi.FLAG_UI_STOP = True
     print('Closing connection from {:s}:{:d}'.format(addr[0], addr[1]))
     conn.close()
 
@@ -63,5 +62,6 @@ def run_server(board):
                     print("error while accepting connections:: " + str(e))
             except KeyboardInterrupt:
                 STOP_THREAD = True
+                drv_ftdi.FLAG_UI_STOP = True
                 s.close()
                 break
